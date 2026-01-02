@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Decryption Page</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="page-header">
+            <a href="/" class="back-btn">
+                <i class="fas fa-arrow-left"></i> Back to Home
+            </a>
+            <h1><i class="fas fa-unlock"></i> Decryption</h1>
+            <p class="subtitle">Convert secret code back to readable text</p>
+        </header>
+        
+        <div class="encryption-area">
+            <!-- Input Section -->
+            <div class="input-section">
+                <h2><i class="fas fa-shield-alt"></i> Text to Decrypt</h2>
+                <textarea id="decrypt-text" placeholder="Paste encrypted text here..."></textarea>
+            </div>
+            
+            <!-- Key Section -->
+            <div class="key-section">
+                <h2><i class="fas fa-key"></i> Secret Key</h2>
+                <input type="text" id="decrypt-key" placeholder="Enter the same secret key">
+                <p class="key-note">Must be the same key used for encryption</p>
+            </div>
+            
+            <!-- Decrypt Button -->
+            <button onclick="decryptText()" class="action-btn decrypt-action">
+                <i class="fas fa-unlock"></i> Decrypt Text
+            </button>
+            
+            <!-- Output Section -->
+            <div class="output-section">
+                <h2><i class="fas fa-unlock"></i> Decrypted Result</h2>
+                <div class="output-box" id="decrypt-output">
+                    <!-- Decrypted text will appear here -->
+                </div>
+                <button onclick="copyResult()" class="copy-btn">
+                    <i class="far fa-copy"></i> Copy Result
+                </button>
+            </div>
+            
+            <!-- Navigation -->
+            <div class="nav-buttons">
+                <a href="/" class="nav-btn">
+                    <i class="fas fa-home"></i> Back to Home
+                </a>
+                <a href="/encrypt" class="nav-btn">
+                    <i class="fas fa-lock"></i> Go to Encryption
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notification -->
+    <div id="notification" class="notification">
+        <i class="fas fa-check-circle"></i>
+        <span id="notification-text">Copied!</span>
+    </div>
+    
+    <script>
+        async function decryptText() {
+            const text = document.getElementById('decrypt-text').value.trim();
+            const key = document.getElementById('decrypt-key').value.trim();
+            
+            if (!text) {
+                showNotification('Please enter text to decrypt!', 'error');
+                return;
+            }
+            
+            if (!key) {
+                showNotification('Please enter the secret key!', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/decrypt', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({text, key})
+                });
+                
+                const data = await response.json();
+                
+                if (data.result) {
+                    document.getElementById('decrypt-output').textContent = data.result;
+                    showNotification('Text decrypted successfully!');
+                } else {
+                    showNotification('Error: ' + data.error, 'error');
+                }
+            } catch (error) {
+                showNotification('Failed to decrypt text', 'error');
+            }
+        }
+        
+        function copyResult() {
+            const text = document.getElementById('decrypt-output').textContent;
+            if (text && text.trim()) {
+                navigator.clipboard.writeText(text);
+                showNotification('Copied to clipboard!');
+            } else {
+                showNotification('Nothing to copy yet!', 'warning');
+            }
+        }
+        
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            const text = document.getElementById('notification-text');
+            const icon = notification.querySelector('i');
+            
+            text.textContent = message;
+            
+            if (type === 'error') {
+                icon.className = 'fas fa-exclamation-circle';
+                notification.style.borderLeftColor = '#ff6b6b';
+            } else if (type === 'warning') {
+                icon.className = 'fas fa-exclamation-triangle';
+                notification.style.borderLeftColor = '#ffa726';
+            } else {
+                icon.className = 'fas fa-check-circle';
+                notification.style.borderLeftColor = '#4CAF50';
+            }
+            
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Initialize empty state
+        window.onload = function() {
+            document.getElementById('decrypt-output').textContent = '';
+        };
+    </script>
+</body>
+</html>

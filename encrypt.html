@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Encryption Page</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="page-header">
+            <a href="/" class="back-btn">
+                <i class="fas fa-arrow-left"></i> Back to Home
+            </a>
+            <h1><i class="fas fa-lock"></i> Encryption</h1>
+            <p class="subtitle">Convert your text into secret code</p>
+        </header>
+        
+        <div class="encryption-area">
+            <!-- Input Section -->
+            <div class="input-section">
+                <h2><i class="fas fa-keyboard"></i> Text to Encrypt</h2>
+                <textarea id="encrypt-text" placeholder="Type your message here..."></textarea>
+            </div>
+            
+            <!-- Key Section -->
+            <div class="key-section">
+                <h2><i class="fas fa-key"></i> Secret Key</h2>
+                <input type="text" id="encrypt-key" placeholder="Enter your secret key">
+                <p class="key-note">Remember this key! You'll need it to decrypt.</p>
+            </div>
+            
+            <!-- Encrypt Button -->
+            <button onclick="encryptText()" class="action-btn encrypt-action">
+                <i class="fas fa-lock"></i> Encrypt Text
+            </button>
+            
+            <!-- Output Section -->
+            <div class="output-section">
+                <h2><i class="fas fa-lock"></i> Encrypted Result</h2>
+                <div class="output-box" id="encrypt-output">
+                    <!-- Encrypted text will appear here -->
+                </div>
+                <button onclick="copyResult()" class="copy-btn">
+                    <i class="far fa-copy"></i> Copy Result
+                </button>
+            </div>
+            
+            <!-- Navigation -->
+            <div class="nav-buttons">
+                <a href="/" class="nav-btn">
+                    <i class="fas fa-home"></i> Back to Home
+                </a>
+                <a href="/decrypt" class="nav-btn">
+                    <i class="fas fa-unlock"></i> Go to Decryption
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notification -->
+    <div id="notification" class="notification">
+        <i class="fas fa-check-circle"></i>
+        <span id="notification-text">Copied!</span>
+    </div>
+    
+    <script>
+        async function encryptText() {
+            const text = document.getElementById('encrypt-text').value.trim();
+            const key = document.getElementById('encrypt-key').value.trim();
+            
+            if (!text) {
+                showNotification('Please enter text to encrypt!', 'error');
+                return;
+            }
+            
+            if (!key) {
+                showNotification('Please enter a secret key!', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/encrypt', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({text, key})
+                });
+                
+                const data = await response.json();
+                
+                if (data.result) {
+                    document.getElementById('encrypt-output').textContent = data.result;
+                    showNotification('Text encrypted successfully!');
+                } else {
+                    showNotification('Error: ' + data.error, 'error');
+                }
+            } catch (error) {
+                showNotification('Failed to encrypt text', 'error');
+            }
+        }
+        
+        function copyResult() {
+            const text = document.getElementById('encrypt-output').textContent;
+            if (text && text.trim()) {
+                navigator.clipboard.writeText(text);
+                showNotification('Copied to clipboard!');
+            } else {
+                showNotification('Nothing to copy yet!', 'warning');
+            }
+        }
+        
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            const text = document.getElementById('notification-text');
+            const icon = notification.querySelector('i');
+            
+            text.textContent = message;
+            
+            if (type === 'error') {
+                icon.className = 'fas fa-exclamation-circle';
+                notification.style.borderLeftColor = '#ff6b6b';
+            } else if (type === 'warning') {
+                icon.className = 'fas fa-exclamation-triangle';
+                notification.style.borderLeftColor = '#ffa726';
+            } else {
+                icon.className = 'fas fa-check-circle';
+                notification.style.borderLeftColor = '#4CAF50';
+            }
+            
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // No auto-encrypt on page load
+        window.onload = function() {
+            // Initialize empty state
+            document.getElementById('encrypt-output').textContent = '';
+        };
+    </script>
+</body>
+</html>
