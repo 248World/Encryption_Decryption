@@ -1,12 +1,12 @@
-
 {
   "name": "encryption-decryption-backend",
-  "version": "1.0.0",
-  "description": "Encryption and decryption API built with Express.js",
+  "version": "2.0.0",
+  "description": "AES-256-GCM encryption and decryption API built with Express.js",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "test": "node --test"
   },
   "dependencies": {
     "cors": "^2.8.5",
