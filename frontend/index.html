@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>Simple Encryption - Home</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
@@ -13,19 +13,16 @@
             
             <div class="choice-cards">
                 <!-- Encryption Card -->
-                <a href="/encrypt" class="card">
-                   
-                       <img src="{{ url_for('static', filename='encr.png') }}" alt="Encryption">
-             
+                <a href="encrypt.html" class="card">
+                    <img src="encr.png" alt="Encryption">
                     <h2>Encryption</h2>
                     <p>Convert your text into secret code</p>
                     <div class="card-btn">Go to Encryption →</div>
                 </a>
                 
                 <!-- Decryption Card -->
-                <a href="/decrypt" class="card">
-                    
-                   <img src="{{ url_for('static', filename='decr (2).png') }}" alt="Encryption">
+                <a href="decrypt.html" class="card">
+                    <img src="decr.png" alt="Decryption">
                     <h2>Decryption</h2>
                     <p>Convert secret code back to text</p>
                     <div class="card-btn">Go to Decryption →</div>

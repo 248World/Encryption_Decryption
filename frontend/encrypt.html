@@ -2,13 +2,13 @@
 <html>
 <head>
     <title>Encryption Page</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <div class="container">
         <header class="page-header">
-            <a href="/" class="back-btn">
+            <a href="index.html" class="back-btn">
                 <i class="fas fa-arrow-left"></i> Back to Home
             </a>
             <h1><i class="fas fa-lock"></i> Encryption</h1>
@@ -47,10 +47,10 @@
             
             <!-- Navigation -->
             <div class="nav-buttons">
-                <a href="/" class="nav-btn">
+                <a href="index.html" class="nav-btn">
                     <i class="fas fa-home"></i> Back to Home
                 </a>
-                <a href="/decrypt" class="nav-btn">
+                <a href="decrypt.html" class="nav-btn">
                     <i class="fas fa-unlock"></i> Go to Decryption
                 </a>
             </div>
@@ -64,6 +64,7 @@
     </div>
     
     <script>
+        const API_URL = "http://localhost:5000";
         async function encryptText() {
             const text = document.getElementById('encrypt-text').value.trim();
             const key = document.getElementById('encrypt-key').value.trim();
@@ -79,7 +80,7 @@
             }
             
             try {
-                const response = await fetch('/api/encrypt', {
+                const response = await fetch(API_URL + '/api/encrypt', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({text, key})
