@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const crypto = require("node:crypto");
+const { promisify } = require("node:util");
+const pbkdf2 = promisify(crypto.pbkdf2);
 
 const app = express();
 
@@ -34,7 +36,7 @@ const AUTH_TAG_LENGTH = 16;
 async function encryptWithPassword(plainText, password) {
   const salt = crypto.randomBytes(SALT_LENGTH);
   const iv = crypto.randomBytes(IV_LENGTH);
-  const key = await crypto.promises.pbkdf2(
+  const key = await pbkdf2(
     password,
     salt,
     PBKDF2_ITERATIONS,
@@ -99,7 +101,7 @@ async function decryptWithPassword(payload, password) {
     throw new Error("Invalid encrypted data");
   }
 
-  const key = await crypto.promises.pbkdf2(
+  const key = await pbkdf2(
     password,
     salt,
     PBKDF2_ITERATIONS,
