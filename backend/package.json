@@ -1,6 +1,6 @@
 {
   "name": "encryption-decryption-backend",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "description": "AES-256-GCM encryption and decryption API built with Express.js",
   "main": "server.js",
   "scripts": {
