@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/decrypt",
+      "destination": "/decrypt.html"
+    },
+    {
+      "source": "/encrypt",
+      "destination": "/encrypt.html"
+    }
+  ]
+}
