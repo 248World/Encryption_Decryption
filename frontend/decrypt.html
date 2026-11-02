@@ -63,7 +63,7 @@
                 </h2>
 
                 <input
-                    type="text"
+                    type="password"
                     id="decrypt-key"
                     placeholder="Enter the same secret key"
                     autocomplete="off"
@@ -145,7 +145,7 @@
     <script>
 
         // Express.js backend URL
-        const API_URL = "https://encryption-decryption-seven.vercel.app";
+        const API_URL = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") ? "http://localhost:5000" : "https://encryption-decryption-seven.vercel.app";
 
 
         /**
