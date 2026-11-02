@@ -1,144 +1,357 @@
+
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Encryption Page</title>
+
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
+
 <body>
+
     <div class="container">
+
         <header class="page-header">
+
             <a href="index.html" class="back-btn">
                 <i class="fas fa-arrow-left"></i> Back to Home
             </a>
-            <h1><i class="fas fa-lock"></i> Encryption</h1>
-            <p class="subtitle">Convert your text into secret code</p>
+
+            <h1>
+                <i class="fas fa-lock"></i> Encryption
+            </h1>
+
+            <p class="subtitle">
+                Convert your text into secret code
+            </p>
+
         </header>
-        
+
         <div class="encryption-area">
+
             <!-- Input Section -->
             <div class="input-section">
-                <h2><i class="fas fa-keyboard"></i> Text to Encrypt</h2>
-                <textarea id="encrypt-text" placeholder="Type your message here..."></textarea>
+
+                <h2>
+                    <i class="fas fa-keyboard"></i> Text to Encrypt
+                </h2>
+
+                <textarea
+                    id="encrypt-text"
+                    placeholder="Type your message here..."
+                ></textarea>
+
             </div>
-            
-            <!-- Key Section -->
+
+            <!-- Secret Key Section -->
             <div class="key-section">
-                <h2><i class="fas fa-key"></i> Secret Key</h2>
-                <input type="text" id="encrypt-key" placeholder="Enter your secret key">
-                <p class="key-note">Remember this key! You'll need it to decrypt.</p>
+
+                <h2>
+                    <i class="fas fa-key"></i> Secret Key
+                </h2>
+
+                <input
+                    type="text"
+                    id="encrypt-key"
+                    placeholder="Enter your secret key"
+                    autocomplete="off"
+                >
+
+                <p class="key-note">
+                    Remember this key! You'll need it to decrypt.
+                </p>
+
             </div>
-            
+
             <!-- Encrypt Button -->
-            <button onclick="encryptText()" class="action-btn encrypt-action">
+            <button
+                onclick="encryptText()"
+                class="action-btn encrypt-action"
+                id="encrypt-button"
+            >
                 <i class="fas fa-lock"></i> Encrypt Text
             </button>
-            
+
             <!-- Output Section -->
             <div class="output-section">
-                <h2><i class="fas fa-lock"></i> Encrypted Result</h2>
-                <div class="output-box" id="encrypt-output">
-                    <!-- Encrypted text will appear here -->
-                </div>
-                <button onclick="copyResult()" class="copy-btn">
+
+                <h2>
+                    <i class="fas fa-lock"></i> Encrypted Result
+                </h2>
+
+                <div
+                    class="output-box"
+                    id="encrypt-output"
+                ></div>
+
+                <button
+                    onclick="copyResult()"
+                    class="copy-btn"
+                >
                     <i class="far fa-copy"></i> Copy Result
                 </button>
+
             </div>
-            
+
             <!-- Navigation -->
             <div class="nav-buttons">
+
                 <a href="index.html" class="nav-btn">
                     <i class="fas fa-home"></i> Back to Home
                 </a>
+
                 <a href="decrypt.html" class="nav-btn">
                     <i class="fas fa-unlock"></i> Go to Decryption
                 </a>
+
             </div>
+
         </div>
+
     </div>
-    
+
     <!-- Notification -->
     <div id="notification" class="notification">
+
         <i class="fas fa-check-circle"></i>
-        <span id="notification-text">Copied!</span>
+
+        <span id="notification-text">
+            Notification
+        </span>
+
     </div>
-    
+
     <script>
+
+        // Express.js backend URL
         const API_URL = "http://localhost:5000";
+
+        /**
+         * Encrypt text using the Express backend.
+         */
         async function encryptText() {
-            const text = document.getElementById('encrypt-text').value.trim();
-            const key = document.getElementById('encrypt-key').value.trim();
-            
-            if (!text) {
-                showNotification('Please enter text to encrypt!', 'error');
+
+            const text = document
+                .getElementById('encrypt-text')
+                .value;
+
+            const key = document
+                .getElementById('encrypt-key')
+                .value;
+
+            const button = document.getElementById('encrypt-button');
+
+            const output = document.getElementById('encrypt-output');
+
+            // Validate input
+            if (!text.trim()) {
+
+                showNotification(
+                    'Please enter text to encrypt!',
+                    'error'
+                );
+
                 return;
             }
-            
-            if (!key) {
-                showNotification('Please enter a secret key!', 'error');
+
+            if (!key.trim()) {
+
+                showNotification(
+                    'Please enter a secret key!',
+                    'error'
+                );
+
                 return;
             }
-            
+
+            // Prevent multiple requests
+            button.disabled = true;
+
+            button.innerHTML = `
+                <i class="fas fa-spinner fa-spin"></i>
+                Encrypting...
+            `;
+
             try {
-                const response = await fetch(API_URL + '/api/encrypt', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({text, key})
-                });
-                
+
+                // Send request to Express API
+                const response = await fetch(
+                    `${API_URL}/api/encrypt`,
+                    {
+                        method: 'POST',
+
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+
+                        body: JSON.stringify({
+                            text: text,
+                            key: key
+                        })
+                    }
+                );
+
                 const data = await response.json();
-                
-                if (data.result) {
-                    document.getElementById('encrypt-output').textContent = data.result;
-                    showNotification('Text encrypted successfully!');
-                } else {
-                    showNotification('Error: ' + data.error, 'error');
+
+                // Handle API errors
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.error || 'Encryption failed'
+                    );
+
                 }
+
+                // Display encrypted result
+                output.textContent = data.result;
+
+                showNotification(
+                    'Text encrypted successfully!',
+                    'success'
+                );
+
             } catch (error) {
-                showNotification('Failed to encrypt text', 'error');
+
+                console.error(
+                    'Encryption error:',
+                    error
+                );
+
+                showNotification(
+                    error.message || 'Failed to encrypt text',
+                    'error'
+                );
+
+            } finally {
+
+                // Restore button
+                button.disabled = false;
+
+                button.innerHTML = `
+                    <i class="fas fa-lock"></i>
+                    Encrypt Text
+                `;
+
             }
+
         }
-        
-        function copyResult() {
-            const text = document.getElementById('encrypt-output').textContent;
-            if (text && text.trim()) {
-                navigator.clipboard.writeText(text);
-                showNotification('Copied to clipboard!');
-            } else {
-                showNotification('Nothing to copy yet!', 'warning');
+
+
+        /**
+         * Copy encrypted result to clipboard.
+         */
+        async function copyResult() {
+
+            const output = document.getElementById(
+                'encrypt-output'
+            );
+
+            const text = output.textContent;
+
+            if (!text || !text.trim()) {
+
+                showNotification(
+                    'Nothing to copy yet!',
+                    'warning'
+                );
+
+                return;
             }
+
+            try {
+
+                await navigator.clipboard.writeText(text);
+
+                showNotification(
+                    'Copied to clipboard!',
+                    'success'
+                );
+
+            } catch (error) {
+
+                console.error(
+                    'Clipboard error:',
+                    error
+                );
+
+                showNotification(
+                    'Unable to copy result. Please copy it manually.',
+                    'error'
+                );
+
+            }
+
         }
-        
-        function showNotification(message, type = 'success') {
-            const notification = document.getElementById('notification');
-            const text = document.getElementById('notification-text');
+
+
+        /**
+         * Display notification messages.
+         */
+        function showNotification(
+            message,
+            type = 'success'
+        ) {
+
+            const notification = document.getElementById(
+                'notification'
+            );
+
+            const text = document.getElementById(
+                'notification-text'
+            );
+
             const icon = notification.querySelector('i');
-            
+
             text.textContent = message;
-            
+
             if (type === 'error') {
+
                 icon.className = 'fas fa-exclamation-circle';
+
                 notification.style.borderLeftColor = '#ff6b6b';
+
             } else if (type === 'warning') {
+
                 icon.className = 'fas fa-exclamation-triangle';
+
                 notification.style.borderLeftColor = '#ffa726';
+
             } else {
+
                 icon.className = 'fas fa-check-circle';
+
                 notification.style.borderLeftColor = '#4CAF50';
+
             }
-            
+
             notification.classList.add('show');
-            
+
             setTimeout(() => {
+
                 notification.classList.remove('show');
+
             }, 3000);
+
         }
-        
-        // No auto-encrypt on page load
-        window.onload = function() {
-            // Initialize empty state
-            document.getElementById('encrypt-output').textContent = '';
-        };
+
+
+        /**
+         * Initialize page.
+         */
+        window.addEventListener('DOMContentLoaded', () => {
+
+            document.getElementById(
+                'encrypt-output'
+            ).textContent = '';
+
+        });
+
     </script>
+
 </body>
 </html>
