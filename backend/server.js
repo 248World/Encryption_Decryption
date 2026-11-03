@@ -74,7 +74,13 @@ async function encryptWithPassword(plainText, password) {
 
 // AES-256-GCM decryption
 async function decryptWithPassword(payload, password) {
-  if (typeof payload !== "string" || !payload.startsWith(FORMAT_PREFIX)) {
+  // Accept uppercase or lowercase prefix.
+  // Do not change the case of the encrypted payload.
+  if (
+    typeof payload !== "string" ||
+    payload.slice(0, FORMAT_PREFIX.length).toLowerCase() !==
+      FORMAT_PREFIX.toLowerCase()
+  ) {
     throw new Error("Unsupported encrypted format");
   }
 
@@ -134,7 +140,7 @@ async function decryptWithPassword(payload, password) {
   return plaintext.toString("utf8");
 }
 
-
+// Validate text and password
 function validateTextAndPassword(text, password) {
   return (
     typeof text === "string" &&
@@ -182,7 +188,8 @@ app.post("/api/decrypt", async (req, res) => {
   }
 
   try {
-        const result = await decryptWithPassword(text, key);
+    const result = await decryptWithPassword(text, key);
+
     return res.json({ result });
   } catch {
     return res.status(400).json({
