@@ -19,15 +19,14 @@
             -webkit-text-size-adjust: 100%;
         }
 
-        #decrypt-text {
+        #decrypt-text,
+        #decrypt-output {
             user-select: text;
             -webkit-user-select: text;
         }
 
         #decrypt-output {
             overflow-wrap: anywhere;
-            user-select: text;
-            -webkit-user-select: text;
         }
     </style>
 </head>
@@ -37,6 +36,7 @@
     <div class="container">
 
         <header class="page-header">
+
             <a href="/" class="back-btn">
                 <i class="fas fa-arrow-left"></i> Back to Home
             </a>
@@ -48,11 +48,13 @@
             <p class="subtitle">
                 Convert secret code back to readable text
             </p>
+
         </header>
 
         <div class="encryption-area">
 
             <div class="input-section">
+
                 <h2>
                     <i class="fas fa-shield-alt"></i> Text to Decrypt
                 </h2>
@@ -66,9 +68,11 @@
                     autocomplete="off"
                     style="text-transform: none;"
                 ></textarea>
+
             </div>
 
             <div class="key-section">
+
                 <h2>
                     <i class="fas fa-key"></i> Secret Key
                 </h2>
@@ -86,6 +90,7 @@
                 <p class="key-note">
                     Must be the same key used for encryption.
                 </p>
+
             </div>
 
             <button
@@ -97,6 +102,7 @@
             </button>
 
             <div class="output-section">
+
                 <h2>
                     <i class="fas fa-unlock"></i> Decrypted Result
                 </h2>
@@ -112,9 +118,11 @@
                 >
                     <i class="far fa-copy"></i> Copy Result
                 </button>
+
             </div>
 
             <div class="nav-buttons">
+
                 <a href="/" class="nav-btn">
                     <i class="fas fa-home"></i> Back to Home
                 </a>
@@ -122,14 +130,21 @@
                 <a href="/encrypt" class="nav-btn">
                     <i class="fas fa-lock"></i> Go to Encryption
                 </a>
+
             </div>
 
         </div>
+
     </div>
 
     <div id="notification" class="notification">
+
         <i class="fas fa-check-circle"></i>
-        <span id="notification-text">Notification</span>
+
+        <span id="notification-text">
+            Notification
+        </span>
+
     </div>
 
     <script>
@@ -141,6 +156,9 @@
                 : "https://encryption-decryption-seven.vercel.app";
 
 
+        /**
+         * Decrypt text using the Express backend.
+         */
         async function decryptText() {
 
             const text = document.getElementById('decrypt-text').value;
@@ -174,9 +192,11 @@
                     `${API_URL}/api/decrypt`,
                     {
                         method: 'POST',
+
                         headers: {
                             'Content-Type': 'application/json'
                         },
+
                         body: JSON.stringify({
                             text: text,
                             key: key
@@ -232,7 +252,8 @@
 
 
         /**
-         * Copy decrypted text exactly as displayed.
+         * Copy decrypted text using a temporary textarea.
+         * Preserve every character exactly as displayed.
          */
         async function copyResult() {
 
@@ -244,50 +265,63 @@
                 return;
             }
 
+            const temporaryTextArea = document.createElement('textarea');
+
+            temporaryTextArea.value = text;
+            temporaryTextArea.readOnly = true;
+
+            temporaryTextArea.setAttribute('readonly', '');
+            temporaryTextArea.setAttribute('spellcheck', 'false');
+            temporaryTextArea.setAttribute('autocapitalize', 'off');
+
+            temporaryTextArea.style.position = 'fixed';
+            temporaryTextArea.style.top = '0';
+            temporaryTextArea.style.left = '0';
+            temporaryTextArea.style.width = '100%';
+            temporaryTextArea.style.height = '100px';
+            temporaryTextArea.style.fontSize = '16px';
+            temporaryTextArea.style.opacity = '0.01';
+            temporaryTextArea.style.zIndex = '-1';
+
+            document.body.appendChild(temporaryTextArea);
+
             try {
 
-                if (navigator.clipboard && window.isSecureContext) {
+                temporaryTextArea.focus();
+                temporaryTextArea.select();
+                temporaryTextArea.setSelectionRange(0, text.length);
 
-                    await navigator.clipboard.writeText(text);
+                const copied = document.execCommand('copy');
 
-                } else {
-
-                    const temporaryTextArea = document.createElement('textarea');
-
-                    temporaryTextArea.value = text;
-                    temporaryTextArea.setAttribute('readonly', '');
-                    temporaryTextArea.style.position = 'fixed';
-                    temporaryTextArea.style.opacity = '0';
-                    temporaryTextArea.style.fontSize = '16px';
-
-                    document.body.appendChild(temporaryTextArea);
-
-                    temporaryTextArea.select();
-                    temporaryTextArea.setSelectionRange(0, text.length);
-
-                    const copied = document.execCommand('copy');
-
-                    document.body.removeChild(temporaryTextArea);
-
-                    if (!copied) {
-                        throw new Error('Copy command failed');
-                    }
+                if (!copied) {
+                    throw new Error('Copy operation failed');
                 }
 
-                showNotification('Copied exactly to clipboard!', 'success');
+                showNotification(
+                    'Copied exactly to clipboard!',
+                    'success'
+                );
 
             } catch (error) {
 
                 console.error('Clipboard error:', error);
 
                 showNotification(
-                    'Unable to copy. Please select and copy the text manually.',
+                    'Copy failed. Please use normal text selection.',
                     'error'
                 );
+
+            } finally {
+
+                temporaryTextArea.remove();
+
             }
         }
 
 
+        /**
+         * Display notification messages.
+         */
         function showNotification(message, type = 'success') {
 
             const notification = document.getElementById('notification');
@@ -297,14 +331,20 @@
             text.textContent = message;
 
             if (type === 'error') {
+
                 icon.className = 'fas fa-exclamation-circle';
                 notification.style.borderLeftColor = '#ff6b6b';
+
             } else if (type === 'warning') {
+
                 icon.className = 'fas fa-exclamation-triangle';
                 notification.style.borderLeftColor = '#ffa726';
+
             } else {
+
                 icon.className = 'fas fa-check-circle';
                 notification.style.borderLeftColor = '#4CAF50';
+
             }
 
             notification.classList.add('show');
@@ -315,8 +355,13 @@
         }
 
 
+        /**
+         * Initialize page.
+         */
         window.addEventListener('DOMContentLoaded', () => {
+
             document.getElementById('decrypt-output').textContent = '';
+
         });
 
     </script>
