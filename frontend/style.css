@@ -1076,3 +1076,111 @@ input {
         margin-bottom: 12px;
     }
 }
+
+
+/* =========================================
+   PASSWORD SECURITY TOOLS
+   ========================================= */
+
+.password-input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.password-input-wrapper input {
+    padding-right: 85px;
+}
+
+.password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    width: auto;
+    padding: 7px 10px;
+    border: 1px solid var(--border, #334155);
+    border-radius: 7px;
+    background: #17243a;
+    color: #cbd5e1;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.password-tools-container {
+    margin-top: 14px;
+}
+
+.password-strength-track {
+    width: 100%;
+    height: 7px;
+    overflow: hidden;
+    border-radius: 10px;
+    background: #263449;
+}
+
+.password-strength-fill {
+    width: 0;
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.2s ease, background 0.2s ease;
+}
+
+.password-strength-fill.strength-1 {
+    background: #ef4444;
+}
+
+.password-strength-fill.strength-2 {
+    background: #f59e0b;
+}
+
+.password-strength-fill.strength-3 {
+    background: #22c55e;
+}
+
+.password-strength-label {
+    display: block;
+    margin-top: 7px;
+    color: var(--muted, #94a3b8);
+    font-size: 0.85rem;
+}
+
+.password-tool-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 13px;
+}
+
+.password-tool-actions button {
+    width: auto;
+    padding: 9px 13px;
+    border: 1px solid var(--border, #334155);
+    border-radius: 8px;
+    background: #17243a;
+    color: #e2e8f0;
+    cursor: pointer;
+    font-size: 0.88rem;
+    transition: background 0.2s ease;
+}
+
+.password-tool-actions button:hover,
+.password-toggle:hover {
+    background: #263953;
+}
+
+.password-tool-status {
+    min-height: 18px;
+    margin-top: 8px;
+    color: var(--muted, #94a3b8);
+    font-size: 0.82rem;
+}
+
+@media (max-width: 480px) {
+    .password-tool-actions {
+        flex-direction: column;
+    }
+
+    .password-tool-actions button {
+        width: 100%;
+    }
+}
