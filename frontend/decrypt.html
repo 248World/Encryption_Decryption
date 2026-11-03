@@ -1,7 +1,6 @@
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,15 +8,26 @@
     <title>Decryption Page</title>
 
     <link rel="stylesheet" href="style.css">
-
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <style>
-        #decrypt-text {
+        #decrypt-text,
+        #decrypt-key,
+        #decrypt-output {
             text-transform: none !important;
-            autocapitalize: off;
             -webkit-text-size-adjust: 100%;
+        }
+
+        #decrypt-text {
+            user-select: text;
+            -webkit-user-select: text;
+        }
+
+        #decrypt-output {
+            overflow-wrap: anywhere;
+            user-select: text;
+            -webkit-user-select: text;
         }
     </style>
 </head>
@@ -27,7 +37,6 @@
     <div class="container">
 
         <header class="page-header">
-
             <a href="/" class="back-btn">
                 <i class="fas fa-arrow-left"></i> Back to Home
             </a>
@@ -39,13 +48,11 @@
             <p class="subtitle">
                 Convert secret code back to readable text
             </p>
-
         </header>
 
         <div class="encryption-area">
 
             <div class="input-section">
-
                 <h2>
                     <i class="fas fa-shield-alt"></i> Text to Decrypt
                 </h2>
@@ -57,14 +64,11 @@
                     autocorrect="off"
                     spellcheck="false"
                     autocomplete="off"
-                    inputmode="text"
                     style="text-transform: none;"
                 ></textarea>
-
             </div>
 
             <div class="key-section">
-
                 <h2>
                     <i class="fas fa-key"></i> Secret Key
                 </h2>
@@ -82,7 +86,6 @@
                 <p class="key-note">
                     Must be the same key used for encryption.
                 </p>
-
             </div>
 
             <button
@@ -94,7 +97,6 @@
             </button>
 
             <div class="output-section">
-
                 <h2>
                     <i class="fas fa-unlock"></i> Decrypted Result
                 </h2>
@@ -110,11 +112,9 @@
                 >
                     <i class="far fa-copy"></i> Copy Result
                 </button>
-
             </div>
 
             <div class="nav-buttons">
-
                 <a href="/" class="nav-btn">
                     <i class="fas fa-home"></i> Back to Home
                 </a>
@@ -122,21 +122,14 @@
                 <a href="/encrypt" class="nav-btn">
                     <i class="fas fa-lock"></i> Go to Encryption
                 </a>
-
             </div>
 
         </div>
-
     </div>
 
     <div id="notification" class="notification">
-
         <i class="fas fa-check-circle"></i>
-
-        <span id="notification-text">
-            Notification
-        </span>
-
+        <span id="notification-text">Notification</span>
     </div>
 
     <script>
@@ -148,9 +141,6 @@
                 : "https://encryption-decryption-seven.vercel.app";
 
 
-        /**
-         * Decrypt text using the Express backend.
-         */
         async function decryptText() {
 
             const text = document.getElementById('decrypt-text').value;
@@ -184,11 +174,9 @@
                     `${API_URL}/api/decrypt`,
                     {
                         method: 'POST',
-
                         headers: {
                             'Content-Type': 'application/json'
                         },
-
                         body: JSON.stringify({
                             text: text,
                             key: key
@@ -244,7 +232,7 @@
 
 
         /**
-         * Copy decrypted result to clipboard.
+         * Copy decrypted text exactly as displayed.
          */
         async function copyResult() {
 
@@ -258,28 +246,48 @@
 
             try {
 
-                await navigator.clipboard.writeText(text);
+                if (navigator.clipboard && window.isSecureContext) {
 
-                showNotification(
-                    'Copied to clipboard!',
-                    'success'
-                );
+                    await navigator.clipboard.writeText(text);
+
+                } else {
+
+                    const temporaryTextArea = document.createElement('textarea');
+
+                    temporaryTextArea.value = text;
+                    temporaryTextArea.setAttribute('readonly', '');
+                    temporaryTextArea.style.position = 'fixed';
+                    temporaryTextArea.style.opacity = '0';
+                    temporaryTextArea.style.fontSize = '16px';
+
+                    document.body.appendChild(temporaryTextArea);
+
+                    temporaryTextArea.select();
+                    temporaryTextArea.setSelectionRange(0, text.length);
+
+                    const copied = document.execCommand('copy');
+
+                    document.body.removeChild(temporaryTextArea);
+
+                    if (!copied) {
+                        throw new Error('Copy command failed');
+                    }
+                }
+
+                showNotification('Copied exactly to clipboard!', 'success');
 
             } catch (error) {
 
                 console.error('Clipboard error:', error);
 
                 showNotification(
-                    'Unable to copy result. Please copy it manually.',
+                    'Unable to copy. Please select and copy the text manually.',
                     'error'
                 );
             }
         }
 
 
-        /**
-         * Display notification messages.
-         */
         function showNotification(message, type = 'success') {
 
             const notification = document.getElementById('notification');
@@ -289,17 +297,12 @@
             text.textContent = message;
 
             if (type === 'error') {
-
                 icon.className = 'fas fa-exclamation-circle';
                 notification.style.borderLeftColor = '#ff6b6b';
-
             } else if (type === 'warning') {
-
                 icon.className = 'fas fa-exclamation-triangle';
                 notification.style.borderLeftColor = '#ffa726';
-
             } else {
-
                 icon.className = 'fas fa-check-circle';
                 notification.style.borderLeftColor = '#4CAF50';
             }
@@ -312,13 +315,8 @@
         }
 
 
-        /**
-         * Initialize page.
-         */
         window.addEventListener('DOMContentLoaded', () => {
-
             document.getElementById('decrypt-output').textContent = '';
-
         });
 
     </script>
