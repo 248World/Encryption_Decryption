@@ -1,0 +1,166 @@
+/* =========================================
+   THEME CONTROL
+   ========================================= */
+
+.theme-toolbar {
+    display: flex;
+    width: 100%;
+    max-width: var(--content-width);
+    justify-content: flex-end;
+    margin: 0 auto 18px;
+    position: relative;
+    z-index: 5;
+}
+
+.theme-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 6px 9px 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-small);
+    background: var(--surface);
+    color: var(--muted);
+    box-shadow: var(--shadow);
+    font-size: 0.88rem;
+}
+
+.theme-control label {
+    font-weight: 600;
+}
+
+.theme-control select {
+    min-height: 32px;
+    padding: 4px 28px 4px 9px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface-muted);
+    color: var(--text);
+    font: inherit;
+    cursor: pointer;
+}
+
+.theme-control select:focus-visible {
+    outline: 3px solid rgba(49, 95, 130, 0.28);
+    outline-offset: 2px;
+}
+
+html[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #151a20;
+    --surface: #1d242c;
+    --surface-muted: #242d37;
+    --surface-hover: #2d3945;
+    --text: #e8edf2;
+    --muted: #aab5c0;
+    --subtle: #8d9aa7;
+    --border: #35414d;
+    --border-strong: #4a5866;
+    --primary: #477da5;
+    --primary-hover: #548bb4;
+    --primary-soft: #263a4b;
+    --success: #8bc9a1;
+    --success-bg: #20372b;
+    --danger: #efa0a0;
+    --danger-bg: #3b272b;
+    --warning: #e5c27d;
+    --warning-bg: #3b3324;
+    --shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+    --shadow-raised: 0 8px 24px rgba(0, 0, 0, 0.28);
+}
+
+html[data-theme="dark"] body {
+    background: var(--page);
+    color: var(--text);
+}
+
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] .encryption-area input {
+    border-color: var(--border-strong);
+    background: #202830;
+    color: var(--text);
+}
+
+html[data-theme="dark"] textarea::placeholder,
+html[data-theme="dark"] input::placeholder {
+    color: #8996a3;
+}
+
+html[data-theme="dark"] .output-box {
+    background: #202830;
+    color: #dce4eb;
+}
+
+html[data-theme="dark"] .password-strength-track {
+    background: #3a4652;
+}
+
+html[data-theme="dark"] .file-upload-area {
+    border-color: #526273;
+    background: #202830;
+}
+
+html[data-theme="dark"] .file-password-input {
+    border-color: var(--border-strong);
+    background: #202830;
+}
+
+html[data-theme="dark"] .file-password-input input {
+    background: transparent;
+    color: var(--text);
+}
+
+html[data-theme="dark"] .file-status.error {
+    border-color: #654044;
+}
+
+html[data-theme="dark"] .file-status.success {
+    border-color: #365b43;
+}
+
+html[data-theme="dark"] .file-status.loading {
+    border-color: #3c5367;
+}
+
+html[data-theme="dark"] .file-result {
+    border-color: #365b43;
+    background: var(--success-bg);
+}
+
+html[data-theme="dark"] .file-result p {
+    color: #b7c9bd;
+}
+
+html[data-theme="dark"] .notification {
+    border-color: var(--border);
+    background: var(--surface);
+    color: var(--text);
+}
+
+html[data-theme="dark"] .back-btn:focus-visible,
+html[data-theme="dark"] .file-back-link:focus-visible,
+html[data-theme="dark"] .theme-control select:focus-visible {
+    outline-color: rgba(121, 169, 206, 0.42);
+}
+
+@media (max-width: 540px) {
+    .theme-toolbar {
+        margin-bottom: 12px;
+    }
+
+    .theme-control {
+        padding: 5px 7px 5px 10px;
+    }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    body,
+    .card,
+    .encryption-area,
+    .file-panel,
+    .theme-control,
+    .theme-control select {
+        transition: background-color 160ms ease, color 160ms ease,
+            border-color 160ms ease;
+    }
+}
