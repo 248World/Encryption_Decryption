@@ -134,63 +134,6 @@ async function decryptWithPassword(payload, password) {
   return plaintext.toString("utf8");
 }
 
-// Legacy substitution cipher support
-const LEGACY_ALPHABET =
-  "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,!?";
-
-function hashString(str) {
-  let h = 1779033703 ^ str.length;
-
-  for (let i = 0; i < str.length; i++) {
-    h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
-    h = (h << 13) | (h >>> 19);
-  }
-
-  h = Math.imul(h ^ (h >>> 16), 2246822507);
-  h = Math.imul(h ^ (h >>> 13), 3266489909);
-
-  return (h ^ (h >>> 16)) >>> 0;
-}
-
-function seededRandom(seed) {
-  let a = seed;
-
-  return function () {
-    a = (a + 0x6d2b79f5) >>> 0;
-
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function makeLegacyCipher(password) {
-  const rand = seededRandom(hashString(String(password)));
-  const secret = LEGACY_ALPHABET.split("");
-
-  for (let i = secret.length - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1));
-    [secret[i], secret[j]] = [secret[j], secret[i]];
-  }
-
-  const decrypt = new Map();
-
-  for (let i = 0; i < LEGACY_ALPHABET.length; i++) {
-    decrypt.set(secret[i], LEGACY_ALPHABET[i]);
-  }
-
-  return decrypt;
-}
-
-function translateLegacy(text, map) {
-  return Array.from(text)
-    .map((character) =>
-      map.has(character) ? map.get(character) : character
-    )
-    .join("");
-}
 
 function validateTextAndPassword(text, password) {
   return (
@@ -239,14 +182,7 @@ app.post("/api/decrypt", async (req, res) => {
   }
 
   try {
-    let result;
-
-    if (text.startsWith(FORMAT_PREFIX)) {
-      result = await decryptWithPassword(text, key);
-    } else {
-      result = translateLegacy(text, makeLegacyCipher(key));
-    }
-
+        const result = await decryptWithPassword(text, key);
     return res.json({ result });
   } catch {
     return res.status(400).json({
