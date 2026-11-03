@@ -3,7 +3,6 @@
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -14,13 +13,19 @@
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
+    <style>
+        #decrypt-text {
+            text-transform: none !important;
+            autocapitalize: off;
+            -webkit-text-size-adjust: 100%;
+        }
+    </style>
 </head>
 
 <body>
 
     <div class="container">
 
-        <!-- Page Header -->
         <header class="page-header">
 
             <a href="/" class="back-btn">
@@ -37,10 +42,8 @@
 
         </header>
 
-
         <div class="encryption-area">
 
-            <!-- Input Section -->
             <div class="input-section">
 
                 <h2>
@@ -50,12 +53,16 @@
                 <textarea
                     id="decrypt-text"
                     placeholder="Paste encrypted text here..."
+                    autocapitalize="off"
+                    autocorrect="off"
+                    spellcheck="false"
+                    autocomplete="off"
+                    inputmode="text"
+                    style="text-transform: none;"
                 ></textarea>
 
             </div>
 
-
-            <!-- Secret Key Section -->
             <div class="key-section">
 
                 <h2>
@@ -67,6 +74,9 @@
                     id="decrypt-key"
                     placeholder="Enter the same secret key"
                     autocomplete="off"
+                    autocapitalize="off"
+                    autocorrect="off"
+                    spellcheck="false"
                 >
 
                 <p class="key-note">
@@ -75,20 +85,14 @@
 
             </div>
 
-
-            <!-- Decrypt Button -->
             <button
                 onclick="decryptText()"
                 class="action-btn decrypt-action"
                 id="decrypt-button"
             >
-
                 <i class="fas fa-unlock"></i> Decrypt Text
-
             </button>
 
-
-            <!-- Output Section -->
             <div class="output-section">
 
                 <h2>
@@ -104,15 +108,11 @@
                     onclick="copyResult()"
                     class="copy-btn"
                 >
-
                     <i class="far fa-copy"></i> Copy Result
-
                 </button>
 
             </div>
 
-
-            <!-- Navigation -->
             <div class="nav-buttons">
 
                 <a href="/" class="nav-btn">
@@ -129,8 +129,6 @@
 
     </div>
 
-
-    <!-- Notification -->
     <div id="notification" class="notification">
 
         <i class="fas fa-check-circle"></i>
@@ -141,10 +139,8 @@
 
     </div>
 
-
     <script>
 
-        // Express.js backend URL
         const API_URL =
             (window.location.hostname === "localhost" ||
              window.location.hostname === "127.0.0.1")
@@ -157,53 +153,24 @@
          */
         async function decryptText() {
 
-            const text = document
-                .getElementById('decrypt-text')
-                .value;
+            const text = document.getElementById('decrypt-text').value;
+            const key = document.getElementById('decrypt-key').value;
 
-            const key = document
-                .getElementById('decrypt-key')
-                .value;
+            const button = document.getElementById('decrypt-button');
+            const output = document.getElementById('decrypt-output');
 
-            const button = document.getElementById(
-                'decrypt-button'
-            );
-
-            const output = document.getElementById(
-                'decrypt-output'
-            );
-
-
-            // Validate encrypted text
             if (!text.trim()) {
-
-                showNotification(
-                    'Please enter text to decrypt!',
-                    'error'
-                );
-
+                showNotification('Please enter text to decrypt!', 'error');
                 return;
-
             }
 
-
-            // Validate secret key
             if (!key.trim()) {
-
-                showNotification(
-                    'Please enter the secret key!',
-                    'error'
-                );
-
+                showNotification('Please enter the secret key!', 'error');
                 return;
-
             }
 
-
-            // Clear previous result before starting a new request
             output.textContent = '';
 
-            // Prevent multiple requests
             button.disabled = true;
 
             button.innerHTML = `
@@ -211,14 +178,11 @@
                 Decrypting...
             `;
 
-
             try {
 
-                // Send request to Express API
                 const response = await fetch(
                     `${API_URL}/api/decrypt`,
                     {
-
                         method: 'POST',
 
                         headers: {
@@ -229,39 +193,26 @@
                             text: text,
                             key: key
                         })
-
                     }
                 );
 
-
-                // Read API response
                 const data = await response.json();
 
-
-                // Handle API errors
                 if (!response.ok) {
-
                     throw new Error(
                         data.error || 'Decryption failed'
                     );
-
                 }
 
-
-                // Validate the returned result
                 if (
                     typeof data.result !== 'string' ||
                     !Object.prototype.hasOwnProperty.call(data, 'result')
                 ) {
-
                     throw new Error(
                         'The server returned an invalid decryption result.'
                     );
-
                 }
 
-
-                // Display decrypted result
                 output.textContent = data.result;
 
                 showNotification(
@@ -269,35 +220,26 @@
                     'success'
                 );
 
-
             } catch (error) {
 
-                // Never leave an old result visible after an error
                 output.textContent = '';
 
-                console.error(
-                    'Decryption error:',
-                    error
-                );
+                console.error('Decryption error:', error);
 
                 showNotification(
                     error.message || 'Failed to decrypt text',
                     'error'
                 );
 
-
             } finally {
 
-                // Restore button
                 button.disabled = false;
 
                 button.innerHTML = `
                     <i class="fas fa-unlock"></i>
                     Decrypt Text
                 `;
-
             }
-
         }
 
 
@@ -306,24 +248,13 @@
          */
         async function copyResult() {
 
-            const output = document.getElementById(
-                'decrypt-output'
-            );
-
+            const output = document.getElementById('decrypt-output');
             const text = output.textContent;
 
-
             if (!text || !text.trim()) {
-
-                showNotification(
-                    'Nothing to copy yet!',
-                    'warning'
-                );
-
+                showNotification('Nothing to copy yet!', 'warning');
                 return;
-
             }
-
 
             try {
 
@@ -334,76 +265,50 @@
                     'success'
                 );
 
-
             } catch (error) {
 
-                console.error(
-                    'Clipboard error:',
-                    error
-                );
+                console.error('Clipboard error:', error);
 
                 showNotification(
                     'Unable to copy result. Please copy it manually.',
                     'error'
                 );
-
             }
-
         }
 
 
         /**
          * Display notification messages.
          */
-        function showNotification(
-            message,
-            type = 'success'
-        ) {
+        function showNotification(message, type = 'success') {
 
-            const notification = document.getElementById(
-                'notification'
-            );
-
-            const text = document.getElementById(
-                'notification-text'
-            );
-
+            const notification = document.getElementById('notification');
+            const text = document.getElementById('notification-text');
             const icon = notification.querySelector('i');
 
-
             text.textContent = message;
-
 
             if (type === 'error') {
 
                 icon.className = 'fas fa-exclamation-circle';
-
                 notification.style.borderLeftColor = '#ff6b6b';
 
             } else if (type === 'warning') {
 
                 icon.className = 'fas fa-exclamation-triangle';
-
                 notification.style.borderLeftColor = '#ffa726';
 
             } else {
 
                 icon.className = 'fas fa-check-circle';
-
                 notification.style.borderLeftColor = '#4CAF50';
-
             }
-
 
             notification.classList.add('show');
 
-
             setTimeout(() => {
-
                 notification.classList.remove('show');
-
             }, 3000);
-
         }
 
 
@@ -412,14 +317,11 @@
          */
         window.addEventListener('DOMContentLoaded', () => {
 
-            document.getElementById(
-                'decrypt-output'
-            ).textContent = '';
+            document.getElementById('decrypt-output').textContent = '';
 
         });
 
     </script>
 
 </body>
-
 </html>
