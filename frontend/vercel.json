@@ -7,6 +7,10 @@
     {
       "source": "/encrypt",
       "destination": "/encrypt.html"
+    },
+    {
+      "source": "/files",
+      "destination": "/files.html"
     }
   ]
 }
