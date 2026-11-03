@@ -115,7 +115,7 @@
             <!-- Navigation -->
             <div class="nav-buttons">
 
-                <a href="index.html" class="nav-btn">
+                <a href="/" class="nav-btn">
                     <i class="fas fa-home"></i> Back to Home
                 </a>
 
@@ -145,7 +145,11 @@
     <script>
 
         // Express.js backend URL
-        const API_URL = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") ? "http://localhost:5000" : "https://encryption-decryption-seven.vercel.app";
+        const API_URL =
+            (window.location.hostname === "localhost" ||
+             window.location.hostname === "127.0.0.1")
+                ? "http://localhost:5000"
+                : "https://encryption-decryption-seven.vercel.app";
 
 
         /**
@@ -196,6 +200,9 @@
             }
 
 
+            // Clear previous result before starting a new request
+            output.textContent = '';
+
             // Prevent multiple requests
             button.disabled = true;
 
@@ -231,11 +238,24 @@
                 const data = await response.json();
 
 
-                // Handle errors
+                // Handle API errors
                 if (!response.ok) {
 
                     throw new Error(
                         data.error || 'Decryption failed'
+                    );
+
+                }
+
+
+                // Validate the returned result
+                if (
+                    typeof data.result !== 'string' ||
+                    !Object.prototype.hasOwnProperty.call(data, 'result')
+                ) {
+
+                    throw new Error(
+                        'The server returned an invalid decryption result.'
                     );
 
                 }
@@ -251,6 +271,9 @@
 
 
             } catch (error) {
+
+                // Never leave an old result visible after an error
+                output.textContent = '';
 
                 console.error(
                     'Decryption error:',
