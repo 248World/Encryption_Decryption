@@ -23,7 +23,7 @@
         preloader.classList.add('is-leaving');
         window.setTimeout(function () {
             preloader.remove();
-        }, 280);
+        }, 140);
     }
 
     if (alreadySeen) {
@@ -34,5 +34,5 @@
     const reducedMotion = window.matchMedia &&
         window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    window.setTimeout(removePreloader, reducedMotion ? 150 : 800);
+    window.setTimeout(removePreloader, 150);
 })();
