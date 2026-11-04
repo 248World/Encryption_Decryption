@@ -23,7 +23,7 @@
         preloader.classList.add('is-leaving');
         window.setTimeout(function () {
             preloader.remove();
-        }, 140);
+        }, 750);
     }
 
     if (alreadySeen) {
