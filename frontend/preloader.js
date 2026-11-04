@@ -34,5 +34,5 @@
     const reducedMotion = window.matchMedia &&
         window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    window.setTimeout(removePreloader, 150);
+    window.setTimeout(removePreloader, 120000);
 })();
