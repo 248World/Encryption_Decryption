@@ -188,3 +188,17 @@ html[data-theme="dark"] .preloader-token {
         transition-duration: 120ms;
     }
 }
+
+/* Custom PNG icons */
+.preloader-mark img {
+    width: 54px;
+    height: 54px;
+    object-fit: contain;
+}
+
+.preloader-token img {
+    display: block;
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+}
