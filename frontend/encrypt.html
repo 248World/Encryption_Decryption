@@ -1,4 +1,4 @@
-﻿
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,7 +8,9 @@
     <title>Encryption Page</title>
 
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet"
+        <link rel="stylesheet" href="theme.css">
+    <link rel="stylesheet" href="preloader.css">
+<link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <style>
@@ -25,9 +27,29 @@
             -webkit-user-select: text;
         }
     </style>
+    <script src="theme.js"></script>
 </head>
 
 <body>
+
+    <div id="app-preloader" class="app-preloader" role="status" aria-live="polite">
+        <div class="preloader-content">
+            <div class="preloader-symbol-field" aria-hidden="true">
+                <div class="preloader-orbit"></div>
+                <span class="preloader-token token-lock"><img src="assets/lock.png" alt=""></span>
+                <span class="preloader-token token-key"><img src="assets/key.png" alt=""></span>
+                <span class="preloader-token token-hash"><img src="assets/hash.png" alt=""></span>
+                <span class="preloader-token token-code"><img src="assets/code.png" alt=""></span>
+                <div class="preloader-mark"><img src="assets/shield.png" alt="Secure Crypto"></div>
+            </div>
+            <p class="preloader-kicker">Secure Crypto</p>
+            <h1>Your privacy starts here</h1>
+            <p class="preloader-message">Preparing a safer space for your data.</p>
+            <div class="preloader-progress" aria-hidden="true"><span></span></div>
+        </div>
+    </div>
+    <script src="preloader.js"></script>
+
 
     <div class="container">
 
