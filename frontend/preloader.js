@@ -1,7 +1,8 @@
+
 (function () {
     'use strict';
 
-    const STORAGE_KEY = 'secure-crypto-preloader-seen';
+    const STORAGE_KEY = 'ciphernest-preloader-seen';
     const preloader = document.getElementById('app-preloader');
 
     if (!preloader) {
@@ -12,6 +13,7 @@
 
     try {
         alreadySeen = window.sessionStorage.getItem(STORAGE_KEY) === 'yes';
+
         if (!alreadySeen) {
             window.sessionStorage.setItem(STORAGE_KEY, 'yes');
         }
@@ -21,6 +23,7 @@
 
     function removePreloader() {
         preloader.classList.add('is-leaving');
+
         window.setTimeout(function () {
             preloader.remove();
         }, 750);
@@ -34,5 +37,9 @@
     const reducedMotion = window.matchMedia &&
         window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    window.setTimeout(removePreloader, 4000);
+    // Shorten the intro for users who prefer reduced motion.
+    window.setTimeout(
+        removePreloader,
+        reducedMotion ? 100 : 4000
+    );
 })();

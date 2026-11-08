@@ -1,5 +1,4 @@
-
-(() => {
+﻿(() => {
     'use strict';
 
     const PASSWORD_LENGTH = 20;
@@ -94,13 +93,19 @@
         try {
             await navigator.clipboard.writeText(input.value);
             showMessage('Password copied to clipboard!', 'success');
-        } catch (error) {
-            console.error('Password copy failed:', error);
+        } catch {
             showMessage(
                 'Copy failed. Please copy the password manually.',
                 'error'
             );
         }
+    }
+
+    function createIcon(classNames) {
+        const icon = document.createElement('i');
+        icon.className = classNames;
+        icon.setAttribute('aria-hidden', 'true');
+        return icon;
     }
 
     function initializePasswordTools(input) {
@@ -119,25 +124,41 @@
 
         const strength = document.createElement('div');
         strength.className = 'password-strength';
-        strength.innerHTML = `
-            <div class="password-strength-track">
-                <div class="password-strength-fill"></div>
-            </div>
-            <span class="password-strength-label">
-                Enter a password
-            </span>
-        `;
+
+        const track = document.createElement('div');
+        track.className = 'password-strength-track';
+
+        const fill = document.createElement('div');
+        fill.className = 'password-strength-fill';
+
+        track.appendChild(fill);
+
+        const label = document.createElement('span');
+        label.className = 'password-strength-label';
+        label.textContent = 'Enter a password';
+
+        strength.append(track, label);
 
         const actions = document.createElement('div');
         actions.className = 'password-tool-actions';
-        actions.innerHTML = `
-            <button type="button" class="password-generate">
-                <i class="fas fa-random"></i> Generate password
-            </button>
-            <button type="button" class="password-copy">
-                <i class="fas fa-copy"></i> Copy password
-            </button>
-        `;
+
+        const generateButton = document.createElement('button');
+        generateButton.type = 'button';
+        generateButton.className = 'password-generate';
+        generateButton.append(
+            createIcon('fas fa-random'),
+            document.createTextNode(' Generate password')
+        );
+
+        const copyButton = document.createElement('button');
+        copyButton.type = 'button';
+        copyButton.className = 'password-copy';
+        copyButton.append(
+            createIcon('fas fa-copy'),
+            document.createTextNode(' Copy password')
+        );
+
+        actions.append(generateButton, copyButton);
 
         const status = document.createElement('p');
         status.className = 'password-tool-status';
@@ -149,9 +170,6 @@
 
         wrapper.parentNode.insertBefore(container, wrapper.nextSibling);
 
-        const fill = strength.querySelector('.password-strength-fill');
-        const label = strength.querySelector('.password-strength-label');
-
         function updateStrength() {
             const result = getPasswordStrength(input.value);
 
@@ -161,8 +179,6 @@
             if (result.level > 0) {
                 fill.classList.add(`strength-${result.level}`);
             }
-
-            fill.style.width = `${result.level * 33.333}%`;
         }
 
         toggle.addEventListener('click', () => {
@@ -178,17 +194,20 @@
 
         input.addEventListener('input', updateStrength);
 
-        actions.querySelector('.password-generate')
-            .addEventListener('click', () => {
+        generateButton.addEventListener('click', () => {
+            try {
                 input.value = generatePassword();
                 input.dispatchEvent(new Event('input', { bubbles: true }));
                 input.focus();
 
                 status.textContent = 'A secure password was generated.';
-            });
+            } catch {
+                status.textContent =
+                    'Password generation failed. Please try again.';
+            }
+        });
 
-        actions.querySelector('.password-copy')
-            .addEventListener('click', () => copyPassword(input));
+        copyButton.addEventListener('click', () => copyPassword(input));
 
         updateStrength();
     }
@@ -197,7 +216,8 @@
         ['encrypt-key', 'decrypt-key'].forEach(id => {
             const input = document.getElementById(id);
 
-            if (input) {
+            if (input && !input.dataset.passwordToolsInitialized) {
+                input.dataset.passwordToolsInitialized = 'true';
                 initializePasswordTools(input);
             }
         });

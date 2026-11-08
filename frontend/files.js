@@ -25,6 +25,36 @@
     let selectedFile = null;
     let downloadBlob = null;
     let downloadFileName = "";
+    let downloadUrl = null;
+    let downloadCleanupTimer = null;
+    let isProcessing = false;
+
+    function setButtonContent(button, iconClass, label) {
+        const icon = document.createElement("i");
+        icon.className = iconClass;
+        icon.setAttribute("aria-hidden", "true");
+
+        button.replaceChildren(
+            icon,
+            document.createTextNode(` ${label}`)
+        );
+    }
+
+    function setPasswordToggleIcon(showPassword) {
+        const icon = document.createElement("i");
+
+        icon.className = showPassword
+            ? "fas fa-eye-slash"
+            : "fas fa-eye";
+
+        icon.setAttribute("aria-hidden", "true");
+
+        passwordToggle.replaceChildren(icon);
+        passwordToggle.setAttribute(
+            "aria-label",
+            showPassword ? "Hide password" : "Show password"
+        );
+    }
 
     function showStatus(message, type) {
         statusBox.textContent = message;
@@ -37,13 +67,32 @@
         statusBox.textContent = "";
     }
 
+    function revokeDownloadUrl() {
+        if (downloadCleanupTimer !== null) {
+            window.clearTimeout(downloadCleanupTimer);
+            downloadCleanupTimer = null;
+        }
+
+        if (downloadUrl !== null) {
+            URL.revokeObjectURL(downloadUrl);
+            downloadUrl = null;
+        }
+    }
+
     function clearResult() {
+        revokeDownloadUrl();
+
         resultBox.hidden = true;
+        resultTitle.textContent = "";
+        resultDescription.textContent = "";
+
         downloadBlob = null;
         downloadFileName = "";
     }
 
     function setMode(mode) {
+        if (isProcessing) return;
+
         currentMode = mode;
 
         const encrypting = mode === "encrypt";
@@ -55,11 +104,15 @@
         decryptModeButton.setAttribute("aria-pressed", String(!encrypting));
 
         document.getElementById("file-upload-title").textContent =
-            encrypting ? "Choose a file to encrypt" : "Choose a file to decrypt";
+            encrypting
+                ? "Choose a file to encrypt"
+                : "Choose a file to decrypt";
 
-        submitButton.innerHTML = encrypting
-            ? '<i class="fas fa-lock"></i> Encrypt File'
-            : '<i class="fas fa-lock-open"></i> Decrypt File';
+        setButtonContent(
+            submitButton,
+            encrypting ? "fas fa-lock" : "fas fa-lock-open",
+            encrypting ? "Encrypt File" : "Decrypt File"
+        );
 
         fileInput.accept = encrypting ? "" : ".encrypted";
 
@@ -73,18 +126,24 @@
     }
 
     function selectFile(file) {
-        if (!file) return;
+        if (!file || isProcessing) return;
 
         selectedFile = file;
-        selectedName.textContent = `${file.name} (${formatSize(file.size)})`;
+        selectedName.textContent =
+            `${file.name} (${formatSize(file.size)})`;
 
+        passwordInput.value = "";
         hideStatus();
         clearResult();
     }
 
     function formatSize(bytes) {
         if (bytes < 1024) return `${bytes} B`;
-        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+
+        if (bytes < 1024 * 1024) {
+            return `${(bytes / 1024).toFixed(1)} KB`;
+        }
+
         return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
     }
 
@@ -103,12 +162,47 @@
         return true;
     }
 
+    function setProcessingState(processing, mode = currentMode) {
+        isProcessing = processing;
+
+        submitButton.disabled = processing;
+        browseButton.disabled = processing;
+        encryptModeButton.disabled = processing;
+        decryptModeButton.disabled = processing;
+
+        passwordInput.disabled = processing;
+        passwordToggle.disabled = processing;
+
+        dropArea.setAttribute(
+            "aria-disabled",
+            String(processing)
+        );
+
+        if (processing) {
+            setButtonContent(
+                submitButton,
+                "fas fa-spinner fa-spin",
+                mode === "encrypt" ? "Encrypting File..." : "Decrypting File..."
+            );
+        } else {
+            setButtonContent(
+                submitButton,
+                mode === "encrypt" ? "fas fa-lock" : "fas fa-lock-open",
+                mode === "encrypt" ? "Encrypt File" : "Decrypt File"
+            );
+        }
+    }
+
     browseButton.addEventListener("click", () => {
-        fileInput.click();
+        if (!isProcessing) {
+            fileInput.click();
+        }
     });
 
     fileInput.addEventListener("change", () => {
-        selectFile(fileInput.files[0]);
+        if (!isProcessing) {
+            selectFile(fileInput.files[0]);
+        }
     });
 
     encryptModeButton.addEventListener("click", () => {
@@ -120,20 +214,17 @@
     });
 
     passwordToggle.addEventListener("click", () => {
+        if (isProcessing) return;
+
         const isPassword = passwordInput.type === "password";
 
         passwordInput.type = isPassword ? "text" : "password";
-        passwordToggle.innerHTML = isPassword
-            ? '<i class="fas fa-eye-slash"></i>'
-            : '<i class="fas fa-eye"></i>';
-
-        passwordToggle.setAttribute(
-            "aria-label",
-            isPassword ? "Hide password" : "Show password"
-        );
+        setPasswordToggleIcon(isPassword);
     });
 
     dropArea.addEventListener("dragover", (event) => {
+        if (isProcessing) return;
+
         event.preventDefault();
         dropArea.classList.add("drag-over");
     });
@@ -148,6 +239,8 @@
         event.preventDefault();
         dropArea.classList.remove("drag-over");
 
+        if (isProcessing) return;
+
         const file = event.dataTransfer.files[0];
         selectFile(file);
     });
@@ -155,23 +248,27 @@
     form.addEventListener("submit", async (event) => {
         event.preventDefault();
 
-        if (!validateSelection()) return;
+        if (isProcessing || !validateSelection()) return;
 
         if (!window.FileCrypto) {
-            showStatus("The file encryption engine could not be loaded. Please refresh the page.", "error");
+            showStatus(
+                "The file encryption engine could not be loaded. Please refresh the page.",
+                "error"
+            );
+            passwordInput.value = "";
             return;
         }
 
-        const password = passwordInput.value;
+        const fileToProcess = selectedFile;
+        let password = passwordInput.value;
+        const modeToProcess = currentMode;
+        const startTime = performance.now();
 
-        submitButton.disabled = true;
-        browseButton.disabled = true;
-        encryptModeButton.disabled = true;
-        decryptModeButton.disabled = true;
-
+        setProcessingState(true, modeToProcess);
         clearResult();
+
         showStatus(
-            currentMode === "encrypt"
+            modeToProcess === "encrypt"
                 ? "Encrypting your file. Please wait..."
                 : "Decrypting your file. Please wait...",
             "loading"
@@ -180,65 +277,120 @@
         try {
             let result;
 
-            if (currentMode === "encrypt") {
-                result = await window.FileCrypto.encryptFile(selectedFile, password);
+            if (modeToProcess === "encrypt") {
+                result = await window.FileCrypto.encryptFile(
+                    fileToProcess,
+                    password
+                );
             } else {
-                result = await window.FileCrypto.decryptFile(selectedFile, password);
+                result = await window.FileCrypto.decryptFile(
+                    fileToProcess,
+                    password
+                );
             }
 
             downloadBlob = result.blob;
             downloadFileName = result.fileName;
 
-            resultTitle.textContent = currentMode === "encrypt"
-                ? "File encrypted successfully!"
-                : "File decrypted successfully!";
+            resultTitle.textContent =
+                modeToProcess === "encrypt"
+                    ? "File encrypted successfully!"
+                    : "File decrypted successfully!";
 
             resultDescription.textContent =
                 `Your file is ready to download: ${downloadFileName}`;
 
             resultBox.hidden = false;
-            showStatus("Operation completed successfully.", "success");
+
+            showStatus(
+                "Operation completed successfully.",
+                "success"
+            );
 
         } catch (error) {
-            console.error("File processing error:", error);
-
-            if (error.name === "OperationError" || error.name === "DataError") {
+            if (
+                error &&
+                (
+                    error.name === "OperationError" ||
+                    error.name === "DataError"
+                )
+            ) {
                 showStatus(
                     "Decryption failed. The password may be incorrect or the file may be damaged.",
                     "error"
                 );
             } else {
                 showStatus(
-                    error.message || "Something went wrong while processing the file.",
+                    "Something went wrong while processing the file. Please try again.",
                     "error"
                 );
             }
         } finally {
-            submitButton.disabled = false;
-            browseButton.disabled = false;
-            encryptModeButton.disabled = false;
-            decryptModeButton.disabled = false;
+            passwordInput.value = "";
+            password = "";
+
+            const elapsed = performance.now() - startTime;
+            const remaining = Math.max(0, 400 - elapsed);
+
+            if (remaining > 0) {
+                await new Promise(resolve => {
+                    window.setTimeout(resolve, remaining);
+                });
+            }
+
+            setProcessingState(false, modeToProcess);
         }
     });
 
     downloadButton.addEventListener("click", () => {
         if (!downloadBlob || !downloadFileName) {
-            showStatus("There is no processed file to download.", "error");
+            showStatus(
+                "There is no processed file to download.",
+                "error"
+            );
             return;
         }
 
-        const url = URL.createObjectURL(downloadBlob);
+        if (downloadUrl === null) {
+            downloadUrl = URL.createObjectURL(downloadBlob);
+        }
+
+        if (downloadCleanupTimer !== null) {
+            window.clearTimeout(downloadCleanupTimer);
+        }
+
         const link = document.createElement("a");
 
-        link.href = url;
+        link.href = downloadUrl;
         link.download = downloadFileName;
 
         document.body.appendChild(link);
         link.click();
         link.remove();
 
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        downloadCleanupTimer = window.setTimeout(() => {
+            revokeDownloadUrl();
+        }, 1000);
     });
 
+    window.addEventListener("pagehide", () => {
+        revokeDownloadUrl();
+
+        selectedFile = null;
+        downloadBlob = null;
+        downloadFileName = "";
+
+        fileInput.value = "";
+        passwordInput.value = "";
+
+        selectedName.textContent = "No file selected";
+        resultTitle.textContent = "";
+        resultDescription.textContent = "";
+        resultBox.hidden = true;
+
+        hideStatus();
+    });
+
+    setPasswordToggleIcon(false);
     setMode("encrypt");
 })();

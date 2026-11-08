@@ -1,12 +1,20 @@
-﻿(() => {
+﻿
+(() => {
     "use strict";
 
     const FORMAT_PREFIX = "AES256GCM:v1:";
+
+    // Cryptographic parameters.
     const PBKDF2_ITERATIONS = 600000;
     const KEY_LENGTH = 256;
     const SALT_LENGTH = 16;
     const IV_LENGTH = 12;
     const AUTH_TAG_LENGTH = 16;
+
+    // Input limits, measured in bytes.
+    const MAX_TEXT_BYTES = 1024 * 1024;
+    const MAX_ENCRYPTED_INPUT_BYTES = 2 * 1024 * 1024;
+    const MAX_PASSWORD_BYTES = 1024;
 
     const encoder = new TextEncoder();
     const decoder = new TextDecoder("utf-8", { fatal: true });
@@ -17,6 +25,29 @@
                 "Secure browser encryption is unavailable. Open this page using HTTPS or localhost."
             );
         }
+    }
+
+    function validatePassword(password) {
+        if (typeof password !== "string") {
+            throw new Error("Password must be a string.");
+        }
+
+        // Reject excessively long strings before allocating UTF-8 bytes.
+        if (password.length > MAX_PASSWORD_BYTES) {
+            throw new Error("Password exceeds the maximum supported size.");
+        }
+
+        const passwordBytes = encoder.encode(password);
+
+        if (passwordBytes.length === 0) {
+            throw new Error("Password cannot be empty.");
+        }
+
+        if (passwordBytes.length > MAX_PASSWORD_BYTES) {
+            throw new Error("Password exceeds the maximum supported size.");
+        }
+
+        return passwordBytes;
     }
 
     function bytesToBase64(bytes) {
@@ -74,10 +105,10 @@
         );
     }
 
-    async function deriveKey(password, salt) {
+    async function deriveKey(passwordBytes, salt) {
         const passwordKey = await crypto.subtle.importKey(
             "raw",
-            encoder.encode(password),
+            passwordBytes,
             "PBKDF2",
             false,
             ["deriveKey"]
@@ -103,14 +134,37 @@
     async function encryptText(plaintext, password) {
         ensureWebCrypto();
 
-        if (typeof plaintext !== "string" || typeof password !== "string") {
-            throw new Error("Text and password must be strings.");
+        if (typeof plaintext !== "string") {
+            throw new Error("Text must be a string.");
         }
 
-        const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH));
-        const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
+        // Early check before allocating the UTF-8 byte array.
+        if (plaintext.length > MAX_TEXT_BYTES) {
+            throw new Error(
+                "Text exceeds the maximum supported size of 1 MiB."
+            );
+        }
 
-        const key = await deriveKey(password, salt);
+        const plaintextBytes = encoder.encode(plaintext);
+
+        // Enforce the actual UTF-8 byte limit.
+        if (plaintextBytes.length > MAX_TEXT_BYTES) {
+            throw new Error(
+                "Text exceeds the maximum supported size of 1 MiB."
+            );
+        }
+
+        const passwordBytes = validatePassword(password);
+
+        const salt = crypto.getRandomValues(
+            new Uint8Array(SALT_LENGTH)
+        );
+
+        const iv = crypto.getRandomValues(
+            new Uint8Array(IV_LENGTH)
+        );
+
+        const key = await deriveKey(passwordBytes, salt);
 
         const encrypted = new Uint8Array(
             await crypto.subtle.encrypt(
@@ -120,7 +174,7 @@
                     tagLength: AUTH_TAG_LENGTH * 8
                 },
                 key,
-                encoder.encode(plaintext)
+                plaintextBytes
             )
         );
 
@@ -138,7 +192,9 @@
             ciphertext: bytesToBase64(ciphertext)
         };
 
-        const envelopeBytes = encoder.encode(JSON.stringify(envelope));
+        const envelopeBytes = encoder.encode(
+            JSON.stringify(envelope)
+        );
 
         return FORMAT_PREFIX + bytesToBase64Url(envelopeBytes);
     }
@@ -146,12 +202,28 @@
     async function decryptText(encryptedText, password) {
         ensureWebCrypto();
 
-        if (
-            typeof encryptedText !== "string" ||
-            typeof password !== "string"
-        ) {
-            throw new Error("Encrypted text and password must be strings.");
+        if (typeof encryptedText !== "string") {
+            throw new Error("Encrypted text must be a string.");
         }
+
+        // Early check before allocating the UTF-8 byte array.
+        if (encryptedText.length > MAX_ENCRYPTED_INPUT_BYTES) {
+            throw new Error(
+                "Encrypted data exceeds the maximum supported size of 2 MiB."
+            );
+        }
+
+        // Enforce the actual UTF-8 byte limit.
+        if (
+            encoder.encode(encryptedText).length >
+            MAX_ENCRYPTED_INPUT_BYTES
+        ) {
+            throw new Error(
+                "Encrypted data exceeds the maximum supported size of 2 MiB."
+            );
+        }
+
+        const passwordBytes = validatePassword(password);
 
         const prefix = encryptedText.slice(0, FORMAT_PREFIX.length);
 
@@ -172,6 +244,8 @@
 
         if (
             !envelope ||
+            typeof envelope !== "object" ||
+            Array.isArray(envelope) ||
             envelope.version !== 1 ||
             envelope.kdf !== "pbkdf2-sha256" ||
             envelope.iterations !== PBKDF2_ITERATIONS ||
@@ -197,7 +271,8 @@
         if (
             salt.length !== SALT_LENGTH ||
             iv.length !== IV_LENGTH ||
-            authTag.length !== AUTH_TAG_LENGTH
+            authTag.length !== AUTH_TAG_LENGTH ||
+            ciphertext.length > MAX_TEXT_BYTES
         ) {
             throw new Error("Invalid encrypted data parameters.");
         }
@@ -210,7 +285,7 @@
         encrypted.set(authTag, ciphertext.length);
 
         try {
-            const key = await deriveKey(password, salt);
+            const key = await deriveKey(passwordBytes, salt);
 
             const decrypted = await crypto.subtle.decrypt(
                 {
@@ -223,7 +298,6 @@
             );
 
             return decoder.decode(decrypted);
-
         } catch {
             throw new Error(
                 "Wrong password or encrypted data has been modified."
