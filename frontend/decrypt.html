@@ -5,32 +5,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Decryption Page</title>
+    <title>CipherNest | Text Decryption</title>
 
     <link rel="stylesheet" href="style.css">
         <link rel="stylesheet" href="theme.css">
     <link rel="stylesheet" href="preloader.css">
 <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+          href="/vendor/fontawesome/css/all.min.css">
 
-    <style>
-        #decrypt-text,
-        #decrypt-key,
-        #decrypt-output {
-            text-transform: none !important;
-            -webkit-text-size-adjust: 100%;
-        }
 
-        #decrypt-text,
-        #decrypt-output {
-            user-select: text;
-            -webkit-user-select: text;
-        }
-
-        #decrypt-output {
-            overflow-wrap: anywhere;
-        }
-    </style>
     <script src="theme.js"></script>
 </head>
 
@@ -44,9 +27,9 @@
                 <span class="preloader-token token-key"><img src="assets/key.png" alt=""></span>
                 <span class="preloader-token token-hash"><img src="assets/hash.png" alt=""></span>
                 <span class="preloader-token token-code"><img src="assets/code.png" alt=""></span>
-                <div class="preloader-mark"><img src="assets/shield.png" alt="Secure Crypto"></div>
+                <div class="preloader-mark"><img src="assets/shield.png" alt="CipherNest"></div>
             </div>
-            <p class="preloader-kicker">Secure Crypto</p>
+            <p class="preloader-kicker">CipherNest</p>
             <h1>Your privacy starts here</h1>
             <p class="preloader-message">Preparing a safer space for your data.</p>
             <div class="preloader-progress" aria-hidden="true"><span></span></div>
@@ -88,7 +71,6 @@
                     autocorrect="off"
                     spellcheck="false"
                     autocomplete="off"
-                    style="text-transform: none;"
                 ></textarea>
 
             </div>
@@ -116,7 +98,6 @@
             </div>
 
             <button
-                onclick="decryptText()"
                 class="action-btn decrypt-action"
                 id="decrypt-button"
             >
@@ -134,8 +115,7 @@
                     id="decrypt-output"
                 ></div>
 
-                <button
-                    onclick="copyResult()"
+                <button id="decrypt-copy-button"
                     class="copy-btn"
                 >
                     <i class="far fa-copy"></i> Copy Result
@@ -171,176 +151,8 @@
 
     <script src="crypto.js"></script>
     <script src="password-tools.js"></script>
-    <script>
+    <script src="decrypt-page.js"></script>
 
-        /**
-         * Decrypt text locally using the browser Web Crypto API.
-         */
-        async function decryptText() {
-            const text = document.getElementById('decrypt-text').value;
-            const key = document.getElementById('decrypt-key').value;
-            const button = document.getElementById('decrypt-button');
-            const output = document.getElementById('decrypt-output');
-
-            if (!text.trim()) {
-                showNotification('Please enter text to decrypt!', 'error');
-                return;
-            }
-
-            if (!key.trim()) {
-                showNotification('Please enter the secret key!', 'error');
-                return;
-            }
-
-            output.textContent = '';
-            button.disabled = true;
-            button.innerHTML = `
-                <i class="fas fa-spinner fa-spin"></i>
-                Decrypting...
-            `;
-
-            try {
-                const result = await TextCrypto.decryptText(text, key);
-
-                output.textContent = result;
-
-                showNotification(
-                    'Text decrypted successfully on this device!',
-                    'success'
-                );
-
-            } catch (error) {
-                output.textContent = '';
-                console.error('Decryption error:', error);
-
-                showNotification(
-                    error.message || 'Failed to decrypt text',
-                    'error'
-                );
-
-            } finally {
-                button.disabled = false;
-                button.innerHTML = `
-                    <i class="fas fa-unlock"></i>
-                    Decrypt Text
-                `;
-            }
-        }
-
-        /**
-         * Copy decrypted text using a temporary textarea.
-         * Preserve every character exactly as displayed.
-         */
-        async function copyResult() {
-
-            const output = document.getElementById('decrypt-output');
-            const text = output.textContent;
-
-            if (!text || !text.trim()) {
-                showNotification('Nothing to copy yet!', 'warning');
-                return;
-            }
-
-            const temporaryTextArea = document.createElement('textarea');
-
-            temporaryTextArea.value = text;
-            temporaryTextArea.readOnly = true;
-
-            temporaryTextArea.setAttribute('readonly', '');
-            temporaryTextArea.setAttribute('spellcheck', 'false');
-            temporaryTextArea.setAttribute('autocapitalize', 'off');
-
-            temporaryTextArea.style.position = 'fixed';
-            temporaryTextArea.style.top = '0';
-            temporaryTextArea.style.left = '0';
-            temporaryTextArea.style.width = '100%';
-            temporaryTextArea.style.height = '100px';
-            temporaryTextArea.style.fontSize = '16px';
-            temporaryTextArea.style.opacity = '0.01';
-            temporaryTextArea.style.zIndex = '-1';
-
-            document.body.appendChild(temporaryTextArea);
-
-            try {
-
-                temporaryTextArea.focus();
-                temporaryTextArea.select();
-                temporaryTextArea.setSelectionRange(0, text.length);
-
-                const copied = document.execCommand('copy');
-
-                if (!copied) {
-                    throw new Error('Copy operation failed');
-                }
-
-                showNotification(
-                    'Copied exactly to clipboard!',
-                    'success'
-                );
-
-            } catch (error) {
-
-                console.error('Clipboard error:', error);
-
-                showNotification(
-                    'Copy failed. Please use normal text selection.',
-                    'error'
-                );
-
-            } finally {
-
-                temporaryTextArea.remove();
-
-            }
-        }
-
-
-        /**
-         * Display notification messages.
-         */
-        function showNotification(message, type = 'success') {
-
-            const notification = document.getElementById('notification');
-            const text = document.getElementById('notification-text');
-            const icon = notification.querySelector('i');
-
-            text.textContent = message;
-
-            if (type === 'error') {
-
-                icon.className = 'fas fa-exclamation-circle';
-                notification.style.borderLeftColor = '#ff6b6b';
-
-            } else if (type === 'warning') {
-
-                icon.className = 'fas fa-exclamation-triangle';
-                notification.style.borderLeftColor = '#ffa726';
-
-            } else {
-
-                icon.className = 'fas fa-check-circle';
-                notification.style.borderLeftColor = '#4CAF50';
-
-            }
-
-            notification.classList.add('show');
-
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
-        }
-
-
-        /**
-         * Initialize page.
-         */
-        window.addEventListener('DOMContentLoaded', () => {
-
-            document.getElementById('decrypt-output').textContent = '';
-
-        });
-
-    </script>
 
 </body>
 </html>
