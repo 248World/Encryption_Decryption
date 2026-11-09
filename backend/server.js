@@ -1,6 +1,8 @@
 
 const express = require("express");
 
+const secureShareRouter = require("./api/secureshare");
+
 const app = express();
 
 // Reduce unnecessary framework and response fingerprinting.
@@ -23,6 +25,9 @@ app.use((_req, res, next) => {
 app.get("/health", (_req, res) => {
   res.status(200).json({ status: "ok" });
 });
+
+// SecureShare API routes.
+app.use("/api/secureshare", secureShareRouter);
 
 // Generic response for all other routes.
 // Encryption and decryption are performed in the browser.
