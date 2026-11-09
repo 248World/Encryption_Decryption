@@ -9,8 +9,12 @@
     "test": "node --test"
   },
   "dependencies": {
+    "argon2": "^0.45.2",
     "dotenv": "^18.0.10",
     "express": "^4.21.2",
     "mysql2": "^3.24.6"
+  },
+  "allowScripts": {
+    "argon2@0.45.2": true
   }
 }

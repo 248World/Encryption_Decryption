@@ -26,6 +26,12 @@ app.get("/health", (_req, res) => {
   res.status(200).json({ status: "ok" });
 });
 
+// Parse JSON request bodies for SecureShare only.
+app.use(
+  "/api/secureshare",
+  express.json({ limit: "20kb" })
+);
+
 // SecureShare API routes.
 app.use("/api/secureshare", secureShareRouter);
 
