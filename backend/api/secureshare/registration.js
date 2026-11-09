@@ -1,6 +1,11 @@
 
 const { randomUUID } = require("node:crypto");
 
+const {
+  createVerificationToken,
+  VERIFICATION_TOKEN_EXPIRY_HOURS,
+} = require("./verification-tokens");
+
 function validateRegistrationInput(input) {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     throw new TypeError("Invalid registration details.");
@@ -59,6 +64,10 @@ function createRegistrationService({
   pool,
   hashPassword,
   createId = randomUUID,
+  generateVerificationToken = createVerificationToken,
+  sendVerificationEmail = async () => {
+    throw new Error("Email delivery is not configured.");
+  },
 }) {
   if (!pool || typeof pool.getConnection !== "function") {
     throw new TypeError("A valid database pool is required.");
@@ -68,15 +77,44 @@ function createRegistrationService({
     throw new TypeError("A password hashing function is required.");
   }
 
+  if (typeof generateVerificationToken !== "function") {
+    throw new TypeError("A verification token generator is required.");
+  }
+
+  if (typeof sendVerificationEmail !== "function") {
+    throw new TypeError("An email delivery function is required.");
+  }
+
   return async function registerBusinessOwner(input) {
     const details = validateRegistrationInput(input);
 
-    // Hash before opening the database transaction.
     const passwordHash = await hashPassword(details.password);
+
+    const verification = generateVerificationToken();
+
+    if (
+      !verification ||
+      typeof verification.token !== "string" ||
+      !/^[a-f0-9]{64}$/i.test(verification.token) ||
+      typeof verification.tokenHash !== "string" ||
+      !/^[a-f0-9]{64}$/i.test(verification.tokenHash)
+    ) {
+      throw new TypeError("Invalid verification token data.");
+    }
 
     const userId = createId();
     const businessId = createId();
     const membershipId = createId();
+    const verificationTokenId = createId();
+
+    const expiresAt = new Date(
+      Date.now() + VERIFICATION_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000
+    );
+
+    const expiresAtSql = expiresAt
+      .toISOString()
+      .slice(0, 19)
+      .replace("T", " ");
 
     const connection = await pool.getConnection();
 
@@ -120,16 +158,20 @@ function createRegistrationService({
         ]
       );
 
+      await connection.execute(
+        `INSERT INTO email_verification_tokens
+          (id, user_id, token_hash, expires_at)
+         VALUES (?, ?, ?, ?)`,
+        [
+          verificationTokenId,
+          userId,
+          verification.tokenHash,
+          expiresAtSql,
+        ]
+      );
+
       await connection.commit();
       transactionStarted = false;
-
-      return {
-        userId,
-        businessId,
-        email: details.email,
-        emailVerified: false,
-        emailVerificationRequired: true,
-      };
     } catch (error) {
       if (transactionStarted) {
         try {
@@ -143,6 +185,31 @@ function createRegistrationService({
     } finally {
       connection.release();
     }
+
+    // Send the raw token only after the database transaction commits.
+    // Never return the raw token to the API caller.
+    let emailSent = false;
+
+    try {
+      await sendVerificationEmail({
+        to: details.email,
+        token: verification.token,
+      });
+
+      emailSent = true;
+    } catch (_emailError) {
+      // Registration remains successful.
+      // A resend-verification feature will handle delivery failures.
+    }
+
+    return {
+      userId,
+      businessId,
+      email: details.email,
+      emailVerified: false,
+      emailVerificationRequired: true,
+      verificationEmailSent: emailSent,
+    };
   };
 }
 

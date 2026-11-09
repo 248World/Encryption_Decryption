@@ -49,13 +49,14 @@ const validInput = {
   businessName: "Test Company",
 };
 
-test("registration API returns 201 when registration succeeds", async () => {
+test("registration API returns 201 when registration and email delivery succeed", async () => {
   const server = await startTestServer(async () => ({
     userId: "user-id",
     businessId: "business-id",
     email: "owner@example.com",
     emailVerified: false,
     emailVerificationRequired: true,
+    verificationEmailSent: true,
   }));
 
   try {
@@ -75,7 +76,46 @@ test("registration API returns 201 when registration succeeds", async () => {
     assert.equal(response.status, 201);
     assert.equal(body.account.userId, "user-id");
     assert.equal(body.account.emailVerified, false);
-    assert.match(body.message, /Email verification is required/);
+    assert.equal(body.account.verificationEmailSent, true);
+    assert.match(
+      body.message,
+      /Please check your email to verify your account/
+    );
+  } finally {
+    await server.close();
+  }
+});
+
+test("registration API reports when verification email delivery fails", async () => {
+  const server = await startTestServer(async () => ({
+    userId: "user-id",
+    businessId: "business-id",
+    email: "owner@example.com",
+    emailVerified: false,
+    emailVerificationRequired: true,
+    verificationEmailSent: false,
+  }));
+
+  try {
+    const response = await fetch(
+      `${server.baseUrl}/api/secureshare/auth/register`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(validInput),
+      }
+    );
+
+    const body = await response.json();
+
+    assert.equal(response.status, 201);
+    assert.equal(body.account.verificationEmailSent, false);
+    assert.match(
+      body.message,
+      /verification email could not be sent/
+    );
   } finally {
     await server.close();
   }
