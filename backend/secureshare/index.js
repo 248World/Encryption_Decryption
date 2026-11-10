@@ -1,6 +1,6 @@
 
 const express = require("express");
-const { pool, testDatabaseConnection } = require("../../db");
+const { pool, testDatabaseConnection } = require("../db");
 const { hashPassword } = require("./passwords");
 const { createRegistrationService } = require("./registration");
 const {

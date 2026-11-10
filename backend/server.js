@@ -1,7 +1,7 @@
 
 const express = require("express");
 
-const secureShareRouter = require("./api/secureshare");
+const secureShareRouter = require("./secureshare");
 
 const app = express();
 

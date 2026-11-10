@@ -5,7 +5,7 @@ const express = require("express");
 
 const {
   createSecureShareRouter,
-} = require("../api/secureshare");
+} = require("../secureshare");
 
 async function startTestServer(databaseCheck) {
   const app = express();
