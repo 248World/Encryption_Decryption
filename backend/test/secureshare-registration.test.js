@@ -4,7 +4,7 @@ const assert = require("node:assert/strict");
 
 const {
   createRegistrationService,
-} = require("../api/secureshare/registration");
+} = require("../secureshare/registration");
 
 const validInput = {
   fullName: "Test Owner",

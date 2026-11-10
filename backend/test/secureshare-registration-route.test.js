@@ -6,7 +6,7 @@ const { createServer } = require("node:http");
 
 const {
   createSecureShareRouter,
-} = require("../api/secureshare");
+} = require("../secureshare");
 
 async function startTestServer(registrationService) {
   const app = express();

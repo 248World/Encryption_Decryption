@@ -5,7 +5,7 @@ const {
   createVerificationToken,
   hashVerificationToken,
   VERIFICATION_TOKEN_EXPIRY_HOURS,
-} = require("../api/secureshare/verification-tokens");
+} = require("../secureshare/verification-tokens");
 
 test("verification token is cryptographically random and 64 hex characters", () => {
   const first = createVerificationToken();
